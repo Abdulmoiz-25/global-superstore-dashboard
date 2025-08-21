@@ -125,7 +125,7 @@ fig_category = px.bar(profit_category, x='Category', y='Profit', title='Profit b
 st.plotly_chart(fig_category, use_container_width=True)
 
 # -------------------------------
-# 11️⃣ Discount vs Profit Scatterplot (Improved)
+# 11️⃣ Discount vs Profit Scatterplot (Improved with Trendline)
 # -------------------------------
 st.subheader("Discount vs Profit")
 if 'Discount' in filtered_df.columns and 'Profit' in filtered_df.columns:
@@ -134,19 +134,27 @@ if 'Discount' in filtered_df.columns and 'Profit' in filtered_df.columns:
         x='Discount', 
         y='Profit', 
         color='Category',
-        size='Sales',  # bubble size by sales for more insight
-        opacity=0.6,   # transparency for overlap handling
-        title='Discount vs Profit (with Trendline)',
+        size='Sales',       # bubble size by sales
+        opacity=0.6,        # transparency for overlap handling
+        trendline="ols",    # regression line (per category)
+        trendline_scope="trace",  # separate trendline for each category
+        title='Discount vs Profit (with Regression Lines)',
         hover_data=['Product Name']
     )
-    # Add a trendline for better visibility of relationship
+
+    # Bubble styling
     fig_discount.update_traces(marker=dict(line=dict(width=1, color='DarkSlateGrey')))
+    
+    # Layout polish
     fig_discount.update_layout(
         xaxis_title="Discount",
         yaxis_title="Profit",
-        legend_title="Category"
+        legend_title="Category",
+        height=600
     )
+    
     st.plotly_chart(fig_discount, use_container_width=True)
+
 # ==========================
 # Sales by State Map (Final Single Map)
 # ==========================
@@ -267,6 +275,7 @@ st.download_button(
     file_name='filtered_global_superstore.csv',
     mime='text/csv'
 )
+
 
 
 
