@@ -138,16 +138,6 @@ if 'Discount' in filtered_df.columns and 'Profit' in filtered_df.columns:
     st.plotly_chart(fig_discount, use_container_width=True)
 
 # -------------------------------
-# 12️⃣ Sales by Sub-Category (Stacked by Category)
-# -------------------------------
-st.subheader("Sales by Sub-Category (Stacked by Category)")
-if 'Sub-Category' in filtered_df.columns:
-    sales_subcat = filtered_df.groupby(['Category', 'Sub-Category'])['Sales'].sum().reset_index()
-    fig_subcat = px.bar(sales_subcat, x='Sub-Category', y='Sales', color='Category',
-                        title='Sales by Sub-Category', text='Sales')
-    st.plotly_chart(fig_subcat, use_container_width=True)
-
-# -------------------------------
 # 13️⃣ Sales by State Map (Interactive Drill-down)
 # -------------------------------
 st.subheader("Sales by State Map")
@@ -159,7 +149,6 @@ if 'State' in df.columns:  # use original df for reset option
     )
     sales_state = sales_state.dropna(subset=['State Abbrev'])
 
-    # Choropleth map
     fig_map = px.choropleth(
         sales_state,
         locations='State Abbrev',
@@ -172,12 +161,53 @@ if 'State' in df.columns:  # use original df for reset option
         title='Sales by State'
     )
 
-    # ✅ Add labels inside boundaries (no scattergeo needed)
-    fig_map.update_traces(
-        text=sales_state['State Abbrev'],
-        textposition="inside",
-        textfont=dict(size=10, color="black")
+    # ✅ use your full 50-state dictionary here
+    state_centers = {
+        "AL": (-86.9023, 32.3182), "AK": (-152.4044, 64.2008), "AZ": (-111.0937, 34.0489),
+        "AR": (-92.3731, 34.9697), "CA": (-119.4179, 36.7783), "CO": (-105.7821, 39.5501),
+        "CT": (-72.7554, 41.6032), "DE": (-75.5277, 38.9108), "FL": (-81.5158, 27.6648),
+        "GA": (-82.9001, 32.1656), "HI": (-155.5828, 19.8968), "ID": (-114.7420, 44.0682),
+        "IL": (-89.3985, 40.6331), "IN": (-86.1349, 40.2672), "IA": (-93.0977, 41.8780),
+        "KS": (-98.4842, 39.0119), "KY": (-84.2700, 37.8393), "LA": (-91.9623, 30.9843),
+        "ME": (-69.4455, 45.2538), "MD": (-76.6413, 39.0458), "MA": (-71.3824, 42.4072),
+        "MI": (-85.6024, 44.3148), "MN": (-94.6859, 46.7296), "MS": (-89.3985, 32.3547),
+        "MO": (-91.8318, 37.9643), "MT": (-110.3626, 46.8797), "NE": (-99.9018, 41.4925),
+        "NV": (-116.4194, 38.8026), "NH": (-71.5724, 43.1939), "NJ": (-74.4057, 40.0583),
+        "NM": (-105.8701, 34.5199), "NY": (-75.4999, 43.0003), "NC": (-79.0193, 35.7596),
+        "ND": (-101.0020, 47.5515), "OH": (-82.9071, 40.4173), "OK": (-97.0929, 35.4676),
+        "OR": (-120.5542, 43.8041), "PA": (-77.1945, 41.2033), "RI": (-71.4774, 41.5801),
+        "SC": (-81.1637, 33.8361), "SD": (-99.9018, 43.9695), "TN": (-86.5804, 35.5175),
+        "TX": (-99.9018, 31.9686), "UT": (-111.0937, 39.3210), "VT": (-72.5778, 44.5588),
+        "VA": (-78.6569, 37.4316), "WA": (-120.7401, 47.7511), "WV": (-80.4549, 38.5976),
+        "WI": (-89.6165, 44.2685), "WY": (-107.2903, 43.0759)
+    }
+
+    # Dynamic font size & color
+    min_sales, max_sales = sales_state['Sales'].min(), sales_state['Sales'].max()
+    median_sales = sales_state['Sales'].median()
+
+    sales_state['Font Size'] = sales_state['Sales'].apply(
+        lambda x: 8 + (x - min_sales) / (max_sales - min_sales) * 10 if max_sales > min_sales else 10
     )
+    sales_state['Font Color'] = sales_state['Sales'].apply(
+        lambda x: "white" if x >= median_sales else "black"
+    )
+
+    # ✅ Overlay text labels on map
+    for _, row in sales_state.iterrows():
+        abbrev = row['State Abbrev']
+        if abbrev in state_centers:
+            lon, lat = state_centers[abbrev]
+            fig_map.add_scattergeo(
+                locationmode='USA-states',
+                lon=[lon], lat=[lat],
+                text=row['State Abbrev'],  # show abbreviations
+                mode='text',
+                textfont=dict(size=row['Font Size'], color=row['Font Color']),
+                hovertext=f"{row['State']}: ${row['Sales']:,.2f}",
+                hoverinfo="text",
+                showlegend=False
+            )
 
     # Capture clicks
     selected_points = plotly_events(fig_map, click_event=True, hover_event=False)
@@ -196,6 +226,7 @@ else:
 
 
 
+
 # -------------------------------
 # 14️⃣ Download Filtered Dataset
 # -------------------------------
@@ -207,6 +238,7 @@ st.download_button(
     file_name='filtered_global_superstore.csv',
     mime='text/csv'
 )
+
 
 
 
