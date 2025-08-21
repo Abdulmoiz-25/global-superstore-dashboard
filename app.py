@@ -239,18 +239,19 @@ fig_category.update_traces(
 fig_category.update_layout(
     yaxis=dict(
         title="Profit ($)",
-        range=[profit_category['Profit'].min() * 1.2, profit_category['Profit'].max() * 1.2]
+        range=[0, profit_category['Profit'].max() * 1.2]  # always start from 0
     ),
     xaxis=dict(
         title="Category",
-        tickangle=-15  # slight rotation for readability
+        tickangle=0  # keep labels straight
     ),
     showlegend=False,
-    height=450,  # taller for clarity
-    margin=dict(t=60, b=80, l=50, r=30)  # extra bottom space so labels like 'Furniture' are always visible
+    height=450,
+    margin=dict(t=60, b=70, l=50, r=30)  # enough bottom space so labels stay visible
 )
 
 st.plotly_chart(fig_category, use_container_width=True)
+
 
 
 
@@ -447,6 +448,7 @@ st.download_button(
     file_name='filtered_global_superstore.csv',
     mime='text/csv'
 )
+
 
 
 
