@@ -150,7 +150,6 @@ if 'State' in df.columns:  # use original df for reset option
     )
     sales_state = sales_state.dropna(subset=['State Abbrev'])
 
-    # ✅ Choropleth map (only one)
     fig_map = px.choropleth(
         sales_state,
         locations='State Abbrev',
@@ -163,54 +162,15 @@ if 'State' in df.columns:  # use original df for reset option
         title='Sales by State'
     )
 
-    # ✅ Find top 5 states by sales
-    top_states = sales_state.nlargest(5, 'Sales')['State Abbrev'].tolist()
+    # ✅ Add state abbreviations inside map
+    fig_map.update_traces(
+        text=sales_state['State Abbrev'],
+        textposition="inside",
+        textfont=dict(size=10, color="black")
+    )
 
-    # ✅ Add dynamic state labels inside boundaries
-    state_centers = {
-        "AL": (-86.9023, 32.3182), "AK": (-152.4044, 64.2008), "AZ": (-111.0937, 34.0489),
-        "AR": (-92.3731, 34.9697), "CA": (-119.4179, 36.7783), "CO": (-105.7821, 39.5501),
-        "CT": (-72.7554, 41.6032), "DE": (-75.5277, 38.9108), "FL": (-81.5158, 27.6648),
-        "GA": (-82.9001, 32.1656), "HI": (-155.5828, 19.8968), "ID": (-114.7420, 44.0682),
-        "IL": (-89.3985, 40.6331), "IN": (-86.1349, 40.2672), "IA": (-93.0977, 41.8780),
-        "KS": (-98.4842, 39.0119), "KY": (-84.2700, 37.8393), "LA": (-91.9623, 30.9843),
-        "ME": (-69.4455, 45.2538), "MD": (-76.6413, 39.0458), "MA": (-71.3824, 42.4072),
-        "MI": (-85.6024, 44.3148), "MN": (-94.6859, 46.7296), "MS": (-89.3985, 32.3547),
-        "MO": (-91.8318, 37.9643), "MT": (-110.3626, 46.8797), "NE": (-99.9018, 41.4925),
-        "NV": (-116.4194, 38.8026), "NH": (-71.5724, 43.1939), "NJ": (-74.4057, 40.0583),
-        "NM": (-105.8701, 34.5199), "NY": (-75.4999, 43.0003), "NC": (-79.0193, 35.7596),
-        "ND": (-101.0020, 47.5515), "OH": (-82.9071, 40.4173), "OK": (-97.0929, 35.4676),
-        "OR": (-120.5542, 43.8041), "PA": (-77.1945, 41.2033), "RI": (-71.4774, 41.5801),
-        "SC": (-81.1637, 33.8361), "SD": (-99.9018, 43.9695), "TN": (-86.5804, 35.5175),
-        "TX": (-99.9018, 31.9686), "UT": (-111.0937, 39.3210), "VT": (-72.5778, 44.5588),
-        "VA": (-78.6569, 37.4316), "WA": (-120.7401, 47.7511), "WV": (-80.4549, 38.5976),
-        "WI": (-89.6165, 44.2685), "WY": (-107.2903, 43.0759)
-    }
-
-    min_sales, max_sales = sales_state['Sales'].min(), sales_state['Sales'].max()
-
-    for i, row in sales_state.iterrows():
-        abbrev = row['State Abbrev']
-        if abbrev in state_centers:
-            lon, lat = state_centers[abbrev]
-
-            # scale font size dynamically between 9–16
-            font_size = 9 + (row['Sales'] - min_sales) / (max_sales - min_sales) * 7
-
-            # bold if in top 5
-            font_weight = "bold" if abbrev in top_states else "normal"
-
-            fig_map.add_scattergeo(
-                lon=[lon], lat=[lat],
-                text=row['State Abbrev'],  # show abbreviations
-                mode='text',
-                textfont=dict(size=font_size, color="black", family=f"Arial {font_weight}"),
-                showlegend=False,
-                hoverinfo="skip"
-            )
-
-    # ✅ Capture clicks
-    selected_points = plotly_events(fig_map, click_event=True, hover_event=False)
+    # ✅ Render interactive map ONCE & capture clicks
+    selected_points = plotly_events(fig_map, click_event=True, hover_event=False, key="state_map")
 
     if selected_points:
         st.session_state.selected_state = selected_points[0]["text"]
@@ -219,11 +179,9 @@ if 'State' in df.columns:  # use original df for reset option
         st.success(f"🔎 Dashboard filtered for: {st.session_state.selected_state}")
         filtered_df = filtered_df[filtered_df['State'] == st.session_state.selected_state]
 
-    # ✅ Show only one map
-    st.plotly_chart(fig_map, use_container_width=True)
-
 else:
     st.info("State data not available for map visualization.")
+
 
 # -------------------------------
 # 14️⃣ Download Filtered Dataset
@@ -236,4 +194,5 @@ st.download_button(
     file_name='filtered_global_superstore.csv',
     mime='text/csv'
 )
+
 
