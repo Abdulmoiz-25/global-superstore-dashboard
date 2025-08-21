@@ -157,10 +157,9 @@ state_abbrev = {
     "District of Columbia": "DC"
 }
 
-# ✅ Tiny states needing smaller labels
 tiny_states = {"RI", "DC", "DE", "VT", "NH", "NJ", "CT", "MA", "MD"}
 
-# ✅ Approx lat/lon for zoom centers
+# ✅ Approximate lat/lon for each state center (needed for zoom)
 state_coords = {
     "CA": (37.5, -119.5), "TX": (31.0, -99.9), "NY": (42.9, -75.5), "FL": (27.8, -81.7),
     "IL": (40.0, -89.2), "PA": (41.0, -77.7), "OH": (40.3, -82.8), "GA": (32.7, -83.5),
@@ -182,57 +181,65 @@ if 'State' in df.columns:
     sales_state['State Abbrev'] = sales_state['State'].map(state_abbrev)
     sales_state = sales_state.dropna(subset=['State Abbrev'])
 
-    # ✅ Reset button
+    # ✅ Fix: lock min/max from full data, not filtered
+    min_sales = df.groupby("State")["Sales"].sum().min()
+    max_sales = df.groupby("State")["Sales"].sum().max()
+
     if st.button("🔄 Reset Map to USA"):
         st.session_state.selected_state = None
 
-    # ✅ Base choropleth
     fig_map = px.choropleth(
         sales_state,
         locations='State Abbrev',
         locationmode='USA-states',
         color='Sales',
-        color_continuous_scale=["#deebf7", "#9ecae1", "#3182bd"],  # fixed light → dark blue
-        range_color=(sales_state['Sales'].min(), sales_state['Sales'].max()),
+        color_continuous_scale=["#deebf7", "#9ecae1", "#3182bd"],
+        range_color=(min_sales, max_sales),  # ✅ Locked range
         scope='usa',
         hover_name='State',
         hover_data={'Sales': ':.2f'},
     )
 
-    # ✅ Style layout
+    geo_settings = dict(
+        scope="usa",
+        showland=True,
+        landcolor="lightgrey",
+        lakecolor="white",
+        bgcolor="white",
+        showcountries=False,
+        showsubunits=False
+    )
+
+    if st.session_state.get("selected_state"):
+        abbrev = st.session_state.selected_state
+        st.success(f"🔎 Dashboard filtered for: {abbrev}")
+        filtered_df = filtered_df[filtered_df['State'] == sales_state[sales_state['State Abbrev'] == abbrev]['State'].values[0]]
+        
+        if abbrev in state_coords:
+            lat, lon = state_coords[abbrev]
+            geo_settings.update(
+                center=dict(lat=lat, lon=lon),
+                projection_scale=7 if abbrev not in {"TX", "CA", "AK"} else 4,
+                showlakes=False
+            )
+
     fig_map.update_layout(
-        geo=dict(
-            scope="usa",
-            showland=True,
-            landcolor="lightgrey",
-            lakecolor="white",
-            bgcolor="white",
-            showcountries=False,
-            showsubunits=False
-        ),
-        margin=dict(l=0, r=0, t=30, b=40),
-        height=650,
+        geo=geo_settings,
+        margin=dict(l=0, r=0, t=0, b=0),
         coloraxis_colorbar=dict(
             title="<b>Sales ($)</b>",
             titlefont=dict(color="#3182bd", size=12),
-            tickfont=dict(size=10),
-            orientation="h",
-            thickness=12,
-            len=0.4,
-            x=0.5,
-            xanchor="center",
-            y=-0.15,
-            yanchor="top"
+            tickfont=dict(size=10)
         ),
         paper_bgcolor="white",
         plot_bgcolor="white"
     )
 
-    # ✅ Add state abbreviations + sales values
     for i, row in sales_state.iterrows():
         abbrev = row['State Abbrev']
         sales_val = f"${row['Sales']:,.0f}"
         font_size = 9 if abbrev in tiny_states else 10
+
         fig_map.add_scattergeo(
             locations=[abbrev],
             locationmode="USA-states",
@@ -243,36 +250,14 @@ if 'State' in df.columns:
             hoverinfo="skip"
         )
 
-    # ✅ Capture clicks
     selected_points = plotly_events(fig_map, click_event=True, hover_event=False, key="state_map")
     if selected_points:
         st.session_state.selected_state = selected_points[0]["text"].split("<br>")[0]
-
-    # ✅ Apply zoom + filter
-    if st.session_state.get("selected_state"):
-        abbrev = st.session_state.selected_state
-        st.success(f"🔎 Dashboard filtered for: {abbrev}")
-        filtered_df = filtered_df[filtered_df['State'] == sales_state[sales_state['State Abbrev'] == abbrev]['State'].values[0]]
-
-        # Zoom into state
-        if abbrev in state_coords:
-            lat, lon = state_coords[abbrev]
-            fig_map.update_layout(
-                geo=dict(
-                    scope="usa",
-                    center=dict(lat=lat, lon=lon),
-                    projection_scale=7 if abbrev not in {"TX", "CA", "AK"} else 4,
-                    showlakes=False,
-                    showland=True
-                )
-            )
 
     st.plotly_chart(fig_map, use_container_width=True)
 
 else:
     st.info("State data not available for map visualization.")
-
-
 
 
 
@@ -288,6 +273,7 @@ st.download_button(
     file_name='filtered_global_superstore.csv',
     mime='text/csv'
 )
+
 
 
 
