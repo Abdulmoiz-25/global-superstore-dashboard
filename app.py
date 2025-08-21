@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import os
+import us  # NEW: Library to map full state names to abbreviations
 
 st.set_page_config(page_title="Global Superstore Dashboard", layout="wide")
 st.title("🌟 Global Superstore Interactive Dashboard")
@@ -138,17 +139,22 @@ if 'Sub-Category' in filtered_df.columns:
     st.plotly_chart(fig_subcat, use_container_width=True)
 
 # -------------------------------
-# 13️⃣ Sales by State Map
+# 13️⃣ Sales by State Map (FIXED)
 # -------------------------------
 st.subheader("Sales by State Map")
 if 'State' in filtered_df.columns:
     # Aggregate sales by State
     sales_state = filtered_df.groupby('State')['Sales'].sum().reset_index()
 
+    # Convert full state names to abbreviations
+    sales_state['State Abbrev'] = sales_state['State'].apply(lambda x: us.states.lookup(x).abbr if us.states.lookup(x) else None)
+    sales_state = sales_state.dropna(subset=['State Abbrev'])
+
+    # Create the choropleth map
     fig_map = px.choropleth(
         sales_state,
-        locations='State',
-        locationmode='USA-states',  # Works for US states
+        locations='State Abbrev',
+        locationmode='USA-states',
         color='Sales',
         color_continuous_scale='Blues',
         scope='usa',
