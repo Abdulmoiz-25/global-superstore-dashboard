@@ -172,26 +172,30 @@ if 'State' in df.columns:
         scope='usa',
         hover_name='State',
         hover_data={'Sales': ':.2f'},
-        title='Sales by State'
     )
 
-    # ✅ Layout
+    # ✅ Layout (centered, clean look)
     fig_map.update_layout(
-        geo=dict(scope="usa"),
-        margin=dict(l=0, r=0, t=40, b=0),
-        coloraxis_colorbar=dict(title="Sales ($)")
+        geo=dict(
+            scope="usa",
+            showlakes=False,
+            showcountries=False,
+            showland=True,
+            lakecolor="white"
+        ),
+        margin=dict(l=0, r=0, t=0, b=0),
+        coloraxis_colorbar=dict(title="Sales")
     )
 
-    # ✅ Add labels directly on states
+    # ✅ Add state abbreviations inside shapes
     for i, row in sales_state.iterrows():
-        abbrev = row['State Abbrev']
         fig_map.add_scattergeo(
-            locations=[abbrev],
+            locations=[row['State Abbrev']],
             locationmode="USA-states",
-            text=[abbrev],
+            text=[row['State Abbrev']],
             mode="text",
             showlegend=False,
-            textfont=dict(size=10, color="black"),
+            textfont=dict(color="black", size=10),
             hoverinfo="skip"
         )
 
@@ -222,6 +226,7 @@ st.download_button(
     file_name='filtered_global_superstore.csv',
     mime='text/csv'
 )
+
 
 
 
