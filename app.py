@@ -150,6 +150,7 @@ if 'State' in df.columns:  # use original df for reset option
     )
     sales_state = sales_state.dropna(subset=['State Abbrev'])
 
+    # Base choropleth
     fig_map = px.choropleth(
         sales_state,
         locations='State Abbrev',
@@ -162,12 +163,20 @@ if 'State' in df.columns:  # use original df for reset option
         title='Sales by State'
     )
 
-    # ✅ Add state abbreviations inside map
-    fig_map.update_traces(
-        text=sales_state['State Abbrev'],
-        textposition="inside",
-        textfont=dict(size=10, color="black")
-    )
+    # ✅ Add state abbreviations as scattergeo markers (labels only, no filler)
+    for i, row in sales_state.iterrows():
+        state_info = us.states.lookup(row['State'])
+        if state_info and state_info.centroid:
+            fig_map.add_scattergeo(
+                locationmode='USA-states',
+                lon=[state_info.centroid[1]],  # longitude
+                lat=[state_info.centroid[0]],  # latitude
+                text=row['State Abbrev'],
+                mode='text',
+                textfont=dict(size=10, color="black"),
+                showlegend=False,
+                hoverinfo="skip"
+            )
 
     # ✅ Render interactive map ONCE & capture clicks
     selected_points = plotly_events(fig_map, click_event=True, hover_event=False, key="state_map")
@@ -194,5 +203,6 @@ st.download_button(
     file_name='filtered_global_superstore.csv',
     mime='text/csv'
 )
+
 
 
