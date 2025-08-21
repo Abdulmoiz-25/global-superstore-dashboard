@@ -51,22 +51,47 @@ for col in ['Order Date', 'Ship Date']:
 
 df = df.drop_duplicates()
 
-# -------------------------------
-# 4️⃣ Sidebar Filters
-# -------------------------------
-st.sidebar.header("Filter Options")
-regions = st.sidebar.multiselect("Select Region", options=df['Region'].unique(), default=df['Region'].unique())
-categories = st.sidebar.multiselect("Select Category", options=df['Category'].unique(), default=df['Category'].unique())
-sub_categories = st.sidebar.multiselect("Select Sub-Category", options=df['Sub-Category'].unique(), default=df['Sub-Category'].unique())
 
-# Initialize session
+# -------------------------------
+# 4️⃣ Sidebar Filters (Perfected)
+# -------------------------------
+st.sidebar.markdown("## 🎛️ Dashboard Filters")
+
+with st.sidebar.expander("🌍 Region Filter", expanded=True):
+    regions = st.multiselect(
+        "Select Region(s):",
+        options=df['Region'].unique(),
+        default=df['Region'].unique(),
+        help="Filter the data by geographic region"
+    )
+
+with st.sidebar.expander("📦 Category Filter", expanded=True):
+    categories = st.multiselect(
+        "Select Category:",
+        options=df['Category'].unique(),
+        default=df['Category'].unique(),
+        help="Filter the data by product category"
+    )
+
+with st.sidebar.expander("🛍️ Sub-Category Filter", expanded=False):
+    sub_categories = st.multiselect(
+        "Select Sub-Category:",
+        options=df['Sub-Category'].unique(),
+        default=df['Sub-Category'].unique(),
+        help="Drill down into specific product sub-categories"
+    )
+
+# Initialize session (kept same)
 if "selected_state" not in st.session_state:
     st.session_state.selected_state = None
 
+# Apply filters (logic unchanged)
+filtered_df = df[
+    (df['Region'].isin(regions)) &
+    (df['Category'].isin(categories)) &
+    (df['Sub-Category'].isin(sub_categories))
+]
 
-filtered_df = df[(df['Region'].isin(regions)) &
-                 (df['Category'].isin(categories)) &
-                 (df['Sub-Category'].isin(sub_categories))]
 
 # -------------------------------
 # 5️⃣ KPIs
@@ -452,6 +477,7 @@ st.download_button(
     file_name='filtered_global_superstore.csv',
     mime='text/csv'
 )
+
 
 
 
