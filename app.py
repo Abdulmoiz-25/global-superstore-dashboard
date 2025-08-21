@@ -192,17 +192,24 @@ if 'State' in df.columns:
     sales_state['State Abbrev'] = sales_state['State'].map(state_abbrev)
     sales_state = sales_state.dropna(subset=['State Abbrev'])
 
-    # ✅ Base choropleth (only one colored map)
+    # ✅ Base choropleth (force Blues scale properly)
     fig_map = px.choropleth(
         sales_state,
         locations='State Abbrev',
         locationmode='USA-states',
         color='Sales',
-        color_continuous_scale='Blues',
+        color_continuous_scale=px.colors.sequential.Blues,  # <-- force proper scale
         scope='usa',
         hover_name='State',
         hover_data={'Sales': ':.2f'},
         title='Sales by State'
+    )
+
+    # ✅ Force layout fixes (prevents grayscale bug)
+    fig_map.update_layout(
+        geo=dict(scope="usa"),
+        margin=dict(l=0, r=0, t=40, b=0),
+        coloraxis_colorbar=dict(title="Sales ($)")
     )
 
     # ✅ Add labels inside state boundaries
@@ -234,6 +241,7 @@ else:
 
 
 
+
 # -------------------------------
 # 14️⃣ Download Filtered Dataset
 # -------------------------------
@@ -245,6 +253,7 @@ st.download_button(
     file_name='filtered_global_superstore.csv',
     mime='text/csv'
 )
+
 
 
 
