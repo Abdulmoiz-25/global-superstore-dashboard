@@ -164,6 +164,27 @@ if 'State' in filtered_df.columns:
     }
     sales_state['State Abbrev'] = sales_state['State'].map(state_abbrev)
 
+    # State lat/lon centers (for labels)
+    state_coords = {
+        "CA": [37.3, -119.7], "TX": [31.0, -100.0], "NY": [42.9, -75.0],
+        "FL": [27.8, -81.7], "IL": [40.0, -89.0], "PA": [41.0, -77.5],
+        "OH": [40.3, -82.8], "GA": [32.6, -83.5], "NC": [35.5, -79.0],
+        "MI": [44.3, -85.5], "NJ": [40.1, -74.7], "VA": [37.7, -78.0],
+        "WA": [47.4, -120.7], "AZ": [34.0, -111.7], "MA": [42.3, -71.8],
+        "TN": [35.7, -86.4], "IN": [39.9, -86.3], "MO": [38.6, -92.4],
+        "WI": [44.5, -89.5], "MN": [46.3, -94.3], "CO": [39.1, -105.5],
+        "SC": [33.8, -80.9], "AL": [32.6, -86.8], "KY": [37.5, -85.3],
+        "OR": [44.0, -120.5], "OK": [35.6, -97.5], "CT": [41.6, -72.7],
+        "IA": [42.1, -93.5], "KS": [38.5, -98.0], "NV": [39.3, -116.6],
+        "AR": [34.9, -92.4], "MS": [32.7, -89.6], "UT": [39.3, -111.7],
+        "NE": [41.5, -99.8], "NM": [34.5, -106.1], "WV": [38.6, -80.6],
+        "ID": [44.1, -114.7], "ME": [45.3, -69.0], "NH": [43.7, -71.6],
+        "MT": [46.9, -110.3], "RI": [41.7, -71.5], "DE": [39.0, -75.5],
+        "SD": [44.4, -100.2], "ND": [47.5, -100.5], "VT": [44.0, -72.7],
+        "WY": [43.1, -107.6], "AK": [64.8, -147.7], "HI": [20.8, -156.3],
+        "MD": [39.0, -76.7]
+    }
+
     # Choropleth map
     fig_map = px.choropleth(
         sales_state,
@@ -175,14 +196,14 @@ if 'State' in filtered_df.columns:
         labels={"Sales": "Sales ($)"}
     )
 
-    # Add state abbreviation labels on map
+    # Add state abbreviation labels
     for _, row in sales_state.iterrows():
         abbrev = row['State Abbrev']
-        if pd.notnull(abbrev):
+        if pd.notnull(abbrev) and abbrev in state_coords:
+            lat, lon = state_coords[abbrev]
             fig_map.add_scattergeo(
-                locationmode="USA-states",
-                locations=[abbrev],
-                locationmode2="USA-states",
+                lon=[lon],
+                lat=[lat],
                 text=[abbrev],
                 mode="text",
                 showlegend=False,
@@ -214,6 +235,7 @@ if 'State' in filtered_df.columns:
 else:
     st.warning("⚠️ No 'State' column found in dataset. Map cannot be generated.")
 
+
 # -------------------------------
 # 14️⃣ Download Filtered Dataset
 # -------------------------------
@@ -225,6 +247,7 @@ st.download_button(
     file_name='filtered_global_superstore.csv',
     mime='text/csv'
 )
+
 
 
 
