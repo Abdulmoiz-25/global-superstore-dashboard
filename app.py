@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 import os
 import us
-from streamlit_plotly_events import plotly_events  # NEW
+from streamlit_plotly_events import plotly_events
 
 st.set_page_config(page_title="Global Superstore Dashboard", layout="wide")
 st.title("🌟 Global Superstore Interactive Dashboard")
@@ -60,6 +60,7 @@ regions = st.sidebar.multiselect("Select Region", options=df['Region'].unique(),
 categories = st.sidebar.multiselect("Select Category", options=df['Category'].unique(), default=df['Category'].unique())
 sub_categories = st.sidebar.multiselect("Select Sub-Category", options=df['Sub-Category'].unique(), default=df['Sub-Category'].unique())
 
+# Initialize session
 if "selected_state" not in st.session_state:
     st.session_state.selected_state = None
 
@@ -138,11 +139,11 @@ if 'Discount' in filtered_df.columns and 'Profit' in filtered_df.columns:
     st.plotly_chart(fig_discount, use_container_width=True)
 
 # -------------------------------
-# 13️⃣ Sales by State Map (Interactive Drill-down)
+# 13️⃣ Sales by State Map (Interactive Drill-down + Dropdown)
 # -------------------------------
 st.subheader("Sales by State Map")
 
-if 'State' in df.columns:  # use original df for reset option
+if 'State' in df.columns:
     sales_state = filtered_df.groupby('State')['Sales'].sum().reset_index()
     sales_state['State Abbrev'] = sales_state['State'].apply(
         lambda x: us.states.lookup(x).abbr if us.states.lookup(x) else None
@@ -161,7 +162,7 @@ if 'State' in df.columns:  # use original df for reset option
         title='Sales by State'
     )
 
-    # ✅ use your full 50-state dictionary here
+    # 50-state center dictionary
     state_centers = {
         "AL": (-86.9023, 32.3182), "AK": (-152.4044, 64.2008), "AZ": (-111.0937, 34.0489),
         "AR": (-92.3731, 34.9697), "CA": (-119.4179, 36.7783), "CO": (-105.7821, 39.5501),
@@ -182,7 +183,7 @@ if 'State' in df.columns:  # use original df for reset option
         "WI": (-89.6165, 44.2685), "WY": (-107.2903, 43.0759)
     }
 
-    # Dynamic font size & color
+    # Label font size/color based on sales
     min_sales, max_sales = sales_state['Sales'].min(), sales_state['Sales'].max()
     median_sales = sales_state['Sales'].median()
 
@@ -193,7 +194,7 @@ if 'State' in df.columns:  # use original df for reset option
         lambda x: "white" if x >= median_sales else "black"
     )
 
-    # ✅ Overlay text labels on map
+    # Add abbreviations inside states
     for _, row in sales_state.iterrows():
         abbrev = row['State Abbrev']
         if abbrev in state_centers:
@@ -201,7 +202,7 @@ if 'State' in df.columns:  # use original df for reset option
             fig_map.add_scattergeo(
                 locationmode='USA-states',
                 lon=[lon], lat=[lat],
-                text=row['State Abbrev'],  # show abbreviations
+                text=row['State Abbrev'],
                 mode='text',
                 textfont=dict(size=row['Font Size'], color=row['Font Color']),
                 hovertext=f"{row['State']}: ${row['Sales']:,.2f}",
@@ -209,12 +210,18 @@ if 'State' in df.columns:  # use original df for reset option
                 showlegend=False
             )
 
-    # Capture clicks
+    # Capture clicks on map
     selected_points = plotly_events(fig_map, click_event=True, hover_event=False)
-
     if selected_points:
         st.session_state.selected_state = selected_points[0]["text"]
 
+    # Alternative: Dropdown
+    state_options = sorted(df['State'].unique())
+    manual_state = st.selectbox("Or select a state from dropdown:", ["All"] + state_options)
+    if manual_state != "All":
+        st.session_state.selected_state = manual_state
+
+    # Apply selection
     if st.session_state.selected_state:
         st.success(f"🔎 Dashboard filtered for: {st.session_state.selected_state}")
         filtered_df = filtered_df[filtered_df['State'] == st.session_state.selected_state]
@@ -223,9 +230,6 @@ if 'State' in df.columns:  # use original df for reset option
 
 else:
     st.info("State data not available for map visualization.")
-
-
-
 
 # -------------------------------
 # 14️⃣ Download Filtered Dataset
@@ -238,7 +242,3 @@ st.download_button(
     file_name='filtered_global_superstore.csv',
     mime='text/csv'
 )
-
-
-
-
