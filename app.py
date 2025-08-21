@@ -219,6 +219,7 @@ if 'State' in filtered_df.columns:
         landcolor="black",      # Dark land
         lakecolor="black",      # Dark lakes
         showlakes=True,
+        bgcolor="black",        # Full background
         projection_type="albers usa"
     )
     fig_map.update_traces(marker_line_width=1.2, marker_line_color="white")
@@ -228,6 +229,7 @@ if 'State' in filtered_df.columns:
         height=500,
         paper_bgcolor="black",
         plot_bgcolor="black",
+        geo_bgcolor="black",
         font=dict(color="white")
     )
 
@@ -247,6 +249,7 @@ st.download_button(
     file_name='filtered_global_superstore.csv',
     mime='text/csv'
 )
+
 
 
 
