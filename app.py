@@ -193,7 +193,9 @@ if 'State' in filtered_df.columns:
         color="Sales",
         scope="usa",
         color_continuous_scale="Blues",
-        labels={"Sales": "Sales ($)"}
+        labels={"Sales": "Sales ($)"},
+        hover_name="State",  # ✅ Show state name on hover
+        hover_data={"Sales": ":,.0f", "State Abbrev": False}  # ✅ Show sales nicely, hide abbrev
     )
 
     # Add state abbreviation labels
@@ -238,6 +240,7 @@ else:
     st.warning("⚠️ No 'State' column found in dataset. Map cannot be generated.")
 
 
+
 # -------------------------------
 # 14️⃣ Download Filtered Dataset
 # -------------------------------
@@ -249,6 +252,7 @@ st.download_button(
     file_name='filtered_global_superstore.csv',
     mime='text/csv'
 )
+
 
 
 
