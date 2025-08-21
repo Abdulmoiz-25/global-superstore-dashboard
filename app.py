@@ -72,16 +72,27 @@ filtered_df = df[(df['Region'].isin(regions)) &
 # 5️⃣ KPIs
 # -------------------------------
 st.subheader("Key Performance Indicators (KPIs)")
+
 total_sales = filtered_df['Sales'].sum()
 total_profit = filtered_df['Profit'].sum()
 total_orders = filtered_df['Order ID'].nunique()
 profit_margin = (total_profit / total_sales * 100) if total_sales != 0 else 0
 
+# Helper to format large numbers nicely
+def format_money(value):
+    if value >= 1_000_000:
+        return f"${value/1_000_000:.2f}M"
+    elif value >= 1_000:
+        return f"${value/1_000:.2f}K"
+    else:
+        return f"${value:,.2f}"
+
 col1, col2, col3, col4 = st.columns(4)
-col1.metric("💰 Total Sales", f"${total_sales:,.2f}")
-col2.metric("📈 Total Profit", f"${total_profit:,.2f}")
-col3.metric("🛒 Total Orders", total_orders)
+col1.metric("💰 Total Sales", format_money(total_sales))
+col2.metric("📈 Total Profit", format_money(total_profit))
+col3.metric("🛒 Total Orders", f"{total_orders:,}")
 col4.metric("📊 Profit Margin", f"{profit_margin:.2f}%")
+
 
 # -------------------------------
 # 6️⃣ Top 5 Customers by Sales
@@ -425,6 +436,7 @@ st.download_button(
     file_name='filtered_global_superstore.csv',
     mime='text/csv'
 )
+
 
 
 
