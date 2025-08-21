@@ -2,7 +2,8 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import os
-import us  # NEW: Library to map full state names to abbreviations
+import us
+from streamlit_plotly_events import plotly_events  # NEW
 
 st.set_page_config(page_title="Global Superstore Dashboard", layout="wide")
 st.title("🌟 Global Superstore Interactive Dashboard")
@@ -10,7 +11,7 @@ st.title("🌟 Global Superstore Interactive Dashboard")
 # -------------------------------
 # 1️⃣ Default Dataset in Repo
 # -------------------------------
-default_path = "Global_Superstore2.csv"  # CSV included in the repo
+default_path = "Global_Superstore2.csv"
 
 if os.path.exists(default_path):
     try:
@@ -58,6 +59,14 @@ st.sidebar.header("Filter Options")
 regions = st.sidebar.multiselect("Select Region", options=df['Region'].unique(), default=df['Region'].unique())
 categories = st.sidebar.multiselect("Select Category", options=df['Category'].unique(), default=df['Category'].unique())
 sub_categories = st.sidebar.multiselect("Select Sub-Category", options=df['Sub-Category'].unique(), default=df['Sub-Category'].unique())
+
+if "selected_state" not in st.session_state:
+    st.session_state.selected_state = None
+
+# Reset Filter button in sidebar
+if st.sidebar.button("🔄 Reset State Filter"):
+    st.session_state.selected_state = None
+    st.experimental_rerun()
 
 filtered_df = df[(df['Region'].isin(regions)) &
                  (df['Category'].isin(categories)) &
@@ -139,18 +148,17 @@ if 'Sub-Category' in filtered_df.columns:
     st.plotly_chart(fig_subcat, use_container_width=True)
 
 # -------------------------------
-# 13️⃣ Sales by State Map (FIXED)
+# 13️⃣ Sales by State Map (Interactive Drill-down)
 # -------------------------------
 st.subheader("Sales by State Map")
-if 'State' in filtered_df.columns:
-    # Aggregate sales by State
-    sales_state = filtered_df.groupby('State')['Sales'].sum().reset_index()
 
-    # Convert full state names to abbreviations
-    sales_state['State Abbrev'] = sales_state['State'].apply(lambda x: us.states.lookup(x).abbr if us.states.lookup(x) else None)
+if 'State' in df.columns:  # use original df for reset option
+    sales_state = filtered_df.groupby('State')['Sales'].sum().reset_index()
+    sales_state['State Abbrev'] = sales_state['State'].apply(
+        lambda x: us.states.lookup(x).abbr if us.states.lookup(x) else None
+    )
     sales_state = sales_state.dropna(subset=['State Abbrev'])
 
-    # Create the choropleth map
     fig_map = px.choropleth(
         sales_state,
         locations='State Abbrev',
@@ -163,7 +171,46 @@ if 'State' in filtered_df.columns:
         title='Sales by State'
     )
 
+    # Dynamic font size & color
+    min_sales, max_sales = sales_state['Sales'].min(), sales_state['Sales'].max()
+    median_sales = sales_state['Sales'].median()
+
+    sales_state['Font Size'] = sales_state['Sales'].apply(
+        lambda x: 8 + (x - min_sales) / (max_sales - min_sales) * 10 if max_sales > min_sales else 10
+    )
+    sales_state['Font Color'] = sales_state['Sales'].apply(
+        lambda x: "white" if x >= median_sales else "black"
+    )
+
+    # Add state name labels
+    for i, row in sales_state.iterrows():
+        state_info = us.states.lookup(row['State'])
+        if state_info and state_info.centroid:
+            fig_map.add_scattergeo(
+                locationmode='USA-states',
+                lon=[state_info.centroid[0]],
+                lat=[state_info.centroid[1]],
+                text=row['State'],  
+                mode='text+markers',
+                marker=dict(size=8, opacity=0),
+                textfont=dict(size=row['Font Size'], color=row['Font Color']),
+                hovertext=f"{row['State']}: ${row['Sales']:,.2f}",
+                hoverinfo="text",
+                showlegend=False
+            )
+
+    # Capture clicks
+    selected_points = plotly_events(fig_map, click_event=True, hover_event=False)
+
+    if selected_points:
+        st.session_state.selected_state = selected_points[0]["text"]
+
+    if st.session_state.selected_state:
+        st.success(f"🔎 Dashboard filtered for: {st.session_state.selected_state}")
+        filtered_df = filtered_df[filtered_df['State'] == st.session_state.selected_state]
+
     st.plotly_chart(fig_map, use_container_width=True)
+
 else:
     st.info("State data not available for map visualization.")
 
