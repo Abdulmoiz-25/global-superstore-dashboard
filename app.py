@@ -137,116 +137,123 @@ if 'Discount' in filtered_df.columns and 'Profit' in filtered_df.columns:
                               title='Discount vs Profit', hover_data=['Product Name'])
     st.plotly_chart(fig_discount, use_container_width=True)
 
-# ==========================
-# Sales by State Map (Final Fixed Version)
-# ==========================
+# -------------------------------
+# 13️⃣ Sales by State Map (Interactive Drill-down + Zoom + Reset)
+# -------------------------------
+st.subheader("Sales by State Map")
 
-# Map state names to abbreviations
+# ✅ Static mapping: State → Abbreviation
 state_abbrev = {
-    "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR",
-    "California": "CA", "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE",
-    "Florida": "FL", "Georgia": "GA", "Hawaii": "HI", "Idaho": "ID",
-    "Illinois": "IL", "Indiana": "IN", "Iowa": "IA", "Kansas": "KS",
-    "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD",
-    "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN", "Mississippi": "MS",
-    "Missouri": "MO", "Montana": "MT", "Nebraska": "NE", "Nevada": "NV",
-    "New Hampshire": "NH", "New Jersey": "NJ", "New Mexico": "NM", "New York": "NY",
-    "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH", "Oklahoma": "OK",
-    "Oregon": "OR", "Pennsylvania": "PA", "Rhode Island": "RI",
-    "South Carolina": "SC", "South Dakota": "SD", "Tennessee": "TN",
-    "Texas": "TX", "Utah": "UT", "Vermont": "VT", "Virginia": "VA",
-    "Washington": "WA", "West Virginia": "WV", "Wisconsin": "WI", "Wyoming": "WY"
+    "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR", "California": "CA",
+    "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE", "Florida": "FL", "Georgia": "GA",
+    "Hawaii": "HI", "Idaho": "ID", "Illinois": "IL", "Indiana": "IN", "Iowa": "IA",
+    "Kansas": "KS", "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD",
+    "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN", "Mississippi": "MS", "Missouri": "MO",
+    "Montana": "MT", "Nebraska": "NE", "Nevada": "NV", "New Hampshire": "NH", "New Jersey": "NJ",
+    "New Mexico": "NM", "New York": "NY", "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH",
+    "Oklahoma": "OK", "Oregon": "OR", "Pennsylvania": "PA", "Rhode Island": "RI", "South Carolina": "SC",
+    "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT", "Vermont": "VT",
+    "Virginia": "VA", "Washington": "WA", "West Virginia": "WV", "Wisconsin": "WI", "Wyoming": "WY",
+    "District of Columbia": "DC"
 }
 
-# Add abbreviation column to sales_state
-sales_state['State Abbrev'] = sales_state['State'].map(state_abbrev)
-
-# State centers for label placement
+# ✅ Manual coordinates for state center labels
 state_centers = {
-    "AL": (32.806671, -86.791130), "AK": (61.370716, -152.404419), "AZ": (33.729759, -111.431221),
-    "AR": (34.969704, -92.373123), "CA": (36.116203, -119.681564), "CO": (39.059811, -105.311104),
-    "CT": (41.597782, -72.755371), "DE": (39.318523, -75.507141), "FL": (27.766279, -81.686783),
-    "GA": (33.040619, -83.643074), "HI": (21.094318, -157.498337), "ID": (44.240459, -114.478828),
-    "IL": (40.349457, -88.986137), "IN": (39.849426, -86.258278), "IA": (42.011539, -93.210526),
-    "KS": (38.526600, -96.726486), "KY": (37.668140, -84.670067), "LA": (31.169546, -91.867805),
-    "ME": (44.693947, -69.381927), "MD": (39.063946, -76.802101), "MA": (42.230171, -71.530106),
-    "MI": (43.326618, -84.536095), "MN": (45.694454, -93.900192), "MS": (32.741646, -89.678696),
-    "MO": (38.456085, -92.288368), "MT": (46.921925, -110.454353), "NE": (41.125370, -98.268082),
-    "NV": (38.313515, -117.055374), "NH": (43.452492, -71.563896), "NJ": (40.298904, -74.521011),
-    "NM": (34.840515, -106.248482), "NY": (42.165726, -74.948051), "NC": (35.630066, -79.806419),
-    "ND": (47.528912, -99.784012), "OH": (40.388783, -82.764915), "OK": (35.565342, -96.928917),
-    "OR": (44.572021, -122.070938), "PA": (40.590752, -77.209755), "RI": (41.680893, -71.511780),
-    "SC": (33.856892, -80.945007), "SD": (44.299782, -99.438828), "TN": (35.747845, -86.692345),
-    "TX": (31.054487, -97.563461), "UT": (40.150032, -111.862434), "VT": (44.045876, -72.710686),
-    "VA": (37.769337, -78.169968), "WA": (47.400902, -121.490494), "WV": (38.491226, -80.954456),
-    "WI": (44.268543, -89.616508), "WY": (42.755966, -107.302490)
+    "CA": (37.5, -119.5), "TX": (31.0, -99.0), "NY": (42.9, -75.5), "FL": (27.8, -81.7),
+    "IL": (40.0, -89.0), "PA": (41.0, -77.5), "OH": (40.2, -82.9), "MI": (44.2, -85.4),
+    "GA": (32.7, -83.2), "NC": (35.6, -79.9), "NJ": (40.1, -74.7), "VA": (37.5, -78.7),
+    "WA": (47.4, -120.6), "AZ": (34.3, -111.7), "MA": (42.3, -71.8), "TN": (35.8, -86.3),
+    "IN": (39.9, -86.3), "MO": (38.6, -92.6), "MD": (39.0, -76.8), "WI": (44.6, -89.9),
+    "MN": (46.4, -94.6), "CO": (39.0, -105.5), "SC": (33.8, -80.9), "AL": (32.7, -86.7),
+    "KY": (37.5, -85.3), "OR": (43.9, -120.6), "OK": (35.5, -97.5), "CT": (41.6, -72.7),
+    "IA": (42.1, -93.5), "MS": (32.7, -89.6), "AR": (34.9, -92.4), "KS": (38.5, -98.4),
+    "NV": (38.5, -117.1), "UT": (39.3, -111.7), "NE": (41.6, -99.8), "NM": (34.4, -106.1),
+    "WV": (38.6, -80.6), "ID": (44.2, -114.5), "HI": (20.8, -156.3), "ME": (45.2, -69.0),
+    "NH": (43.7, -71.6), "RI": (41.6, -71.5), "DE": (39.0, -75.5), "VT": (44.0, -72.7),
+    "DC": (38.9, -77.0), "ND": (47.5, -100.5), "SD": (44.4, -100.2), "MT": (46.9, -110.4),
+    "WY": (43.0, -107.6), "AK": (64.8, -152.5)
 }
 
-# Create choropleth map
-fig_map = px.choropleth(
-    sales_state,
-    locations="State Abbrev",
-    locationmode="USA-states",
-    color="Sales",
-    scope="usa",
-    color_continuous_scale="Blues",
-    labels={"Sales": "Sales ($)"}
-)
+# ✅ Small states (show label even if overlapping)
+tiny_states = {"RI", "DC", "DE", "VT", "NH", "NJ", "CT", "MA", "MD"}
 
-# Add state labels with outline effect
-for i, row in sales_state.iterrows():
-    abbrev = row['State Abbrev']
-    if abbrev in state_centers:
-        lat, lon = state_centers[abbrev]
+# ✅ Find correct column name for states
+state_col = None
+for possible_col in ["State", "Province/State", "Ship State"]:  
+    if possible_col in df.columns:
+        state_col = possible_col
+        break
 
-        # White outline behind text
-        fig_map.add_scattergeo(
-            locationmode="USA-states",
-            lon=[lon],
-            lat=[lat],
-            text=abbrev,
-            mode="text",
-            showlegend=False,
-            textfont=dict(size=10, color="white", family="Arial Black"),
-            opacity=0.7
-        )
+if state_col:
+    sales_state = filtered_df.groupby(state_col)['Sales'].sum().reset_index()
+    sales_state['State Abbrev'] = sales_state[state_col].map(state_abbrev)
+    sales_state = sales_state.dropna(subset=['State Abbrev'])
 
-        # Black text on top
-        fig_map.add_scattergeo(
-            locationmode="USA-states",
-            lon=[lon],
-            lat=[lat],
-            text=abbrev,
-            mode="text",
-            showlegend=False,
-            textfont=dict(size=8, color="black", family="Arial Black")
-        )
+    # ✅ Fix: lock min/max from full data
+    min_sales = df.groupby(state_col)["Sales"].sum().min()
+    max_sales = df.groupby(state_col)["Sales"].sum().max()
 
-# Styling map
-fig_map.update_geos(
-    fitbounds="locations",
-    showcountries=False,
-    showcoastlines=False,
-    showland=True,
-    landcolor="white",
-    lakecolor="lightblue",
-    showlakes=True,
-    projection_type="albers usa"
-)
+    if st.button("🔄 Reset Map to USA"):
+        st.session_state.selected_state = None
 
-# Darker state boundaries
-fig_map.update_traces(marker_line_width=1.2, marker_line_color="black")
+    fig_map = px.choropleth(
+        sales_state,
+        locations='State Abbrev',
+        locationmode='USA-states',
+        color='Sales',
+        color_continuous_scale=["#deebf7", "#9ecae1", "#3182bd"],  # ✅ Match screenshot colors
+        range_color=(min_sales, max_sales),  # ✅ Locked scale
+        scope='usa',
+        hover_name=state_col,
+        hover_data={'Sales': ':.2f'},
+    )
 
-# Layout
-fig_map.update_layout(
-    title="Sales by State (US)",
-    margin={"r":0,"t":30,"l":0,"b":0},
-    height=500,
-    paper_bgcolor="white",
-    plot_bgcolor="white"
-)
+    # ✅ Layout improvements
+    fig_map.update_layout(
+        geo=dict(scope="usa", bgcolor="rgba(0,0,0,0)"),
+        margin=dict(l=0, r=0, t=30, b=40),
+        height=650,
+        coloraxis_colorbar=dict(
+            title="Sales ($)",
+            orientation="h",
+            thickness=12,
+            len=0.4,
+            x=0.5,
+            xanchor="center",
+            y=-0.15,
+            yanchor="top"
+        ),
+        plot_bgcolor="white"
+    )
 
-st.plotly_chart(fig_map, use_container_width=True)
+    # ✅ Add labels inside states
+    for i, row in sales_state.iterrows():
+        abbrev = row['State Abbrev']
+        if abbrev in state_centers:
+            lat, lon = state_centers[abbrev]
+            fig_map.add_scattergeo(
+                lon=[lon], lat=[lat],
+                text=abbrev,
+                mode='text',
+                textfont=dict(size=12, color="black"),
+                showlegend=False,
+                hoverinfo="skip"
+            )
+
+    # ✅ Render interactive map & capture clicks
+    selected_points = plotly_events(fig_map, click_event=True, hover_event=False, key="state_map")
+
+    if selected_points:
+        st.session_state.selected_state = selected_points[0]["text"]
+
+    if st.session_state.selected_state:
+        st.success(f"🔎 Dashboard filtered for: {st.session_state.selected_state}")
+        filtered_df = filtered_df[filtered_df[state_col] == st.session_state.selected_state]
+
+    st.plotly_chart(fig_map, use_container_width=True)
+
+else:
+    st.error("❌ No 'State' column found in dataset. Please check your data.")
 
 
 
@@ -263,6 +270,7 @@ st.download_button(
     file_name='filtered_global_superstore.csv',
     mime='text/csv'
 )
+
 
 
 
