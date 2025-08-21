@@ -53,11 +53,11 @@ df = df.drop_duplicates()
 
 
 # -------------------------------
-# 4️⃣ Sidebar Filters (Perfected)
+# 4️⃣ Sidebar Filters (Perfected with Reset)
 # -------------------------------
 st.sidebar.markdown("## 🎛️ Dashboard Filters")
 
-with st.sidebar.expander("🌍 Region Filter", expanded=True):
+with st.sidebar.expander("🌍 Region Filter", expanded=False):
     regions = st.multiselect(
         "Select Region(s):",
         options=df['Region'].unique(),
@@ -65,7 +65,7 @@ with st.sidebar.expander("🌍 Region Filter", expanded=True):
         help="Filter the data by geographic region"
     )
 
-with st.sidebar.expander("📦 Category Filter", expanded=True):
+with st.sidebar.expander("📦 Category Filter", expanded=False):
     categories = st.multiselect(
         "Select Category:",
         options=df['Category'].unique(),
@@ -81,6 +81,12 @@ with st.sidebar.expander("🛍️ Sub-Category Filter", expanded=False):
         help="Drill down into specific product sub-categories"
     )
 
+# 🔄 Reset Filters Button
+if st.sidebar.button("🔄 Reset Filters", type="primary"):
+    regions = df['Region'].unique().tolist()
+    categories = df['Category'].unique().tolist()
+    sub_categories = df['Sub-Category'].unique().tolist()
+
 # Initialize session (kept same)
 if "selected_state" not in st.session_state:
     st.session_state.selected_state = None
@@ -91,6 +97,7 @@ filtered_df = df[
     (df['Category'].isin(categories)) &
     (df['Sub-Category'].isin(sub_categories))
 ]
+
 
 
 # -------------------------------
@@ -477,6 +484,7 @@ st.download_button(
     file_name='filtered_global_superstore.csv',
     mime='text/csv'
 )
+
 
 
 
