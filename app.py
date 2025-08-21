@@ -138,7 +138,31 @@ if 'Sub-Category' in filtered_df.columns:
     st.plotly_chart(fig_subcat, use_container_width=True)
 
 # -------------------------------
-# 13️⃣ Download Filtered Dataset
+# 13️⃣ Sales by City Map
+# -------------------------------
+st.subheader("Sales by City Map")
+if 'City' in filtered_df.columns and 'State' in filtered_df.columns:
+    sales_map = filtered_df.groupby(['City', 'State'])['Sales'].sum().reset_index()
+    sales_map['Location'] = sales_map['City'] + ', ' + sales_map['State']
+
+    fig_map = px.scatter_geo(
+        sales_map,
+        locations='Location',
+        locationmode='USA-states',  # Use 'world' for global dataset
+        scope='usa',
+        size='Sales',
+        hover_name='City',
+        hover_data={'State': True, 'Sales': ':.2f'},
+        title='Sales Distribution by City',
+        projection='albers usa'
+    )
+
+    st.plotly_chart(fig_map, use_container_width=True)
+else:
+    st.info("City/State data not available for map visualization.")
+
+# -------------------------------
+# 14️⃣ Download Filtered Dataset
 # -------------------------------
 st.subheader("Download Filtered Dataset")
 csv = filtered_df.to_csv(index=False).encode('utf-8')
