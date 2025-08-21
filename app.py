@@ -142,27 +142,12 @@ if 'Discount' in filtered_df.columns and 'Profit' in filtered_df.columns:
 # -------------------------------
 st.subheader("Sales by State Map")
 
-# ✅ Static mapping: State → Abbreviation
-state_abbrev = {
-    "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR", "California": "CA",
-    "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE", "Florida": "FL", "Georgia": "GA",
-    "Hawaii": "HI", "Idaho": "ID", "Illinois": "IL", "Indiana": "IN", "Iowa": "IA",
-    "Kansas": "KS", "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD",
-    "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN", "Mississippi": "MS", "Missouri": "MO",
-    "Montana": "MT", "Nebraska": "NE", "Nevada": "NV", "New Hampshire": "NH", "New Jersey": "NJ",
-    "New Mexico": "NM", "New York": "NY", "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH",
-    "Oklahoma": "OK", "Oregon": "OR", "Pennsylvania": "PA", "Rhode Island": "RI", "South Carolina": "SC",
-    "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT", "Vermont": "VT",
-    "Virginia": "VA", "Washington": "WA", "West Virginia": "WV", "Wisconsin": "WI", "Wyoming": "WY",
-    "District of Columbia": "DC"
-}
-
 if 'State' in df.columns:  
     sales_state = filtered_df.groupby('State')['Sales'].sum().reset_index()
     sales_state['State Abbrev'] = sales_state['State'].map(state_abbrev)
     sales_state = sales_state.dropna(subset=['State Abbrev'])
 
-    # ✅ Base choropleth
+    # ✅ Base choropleth with Blues scale
     fig_map = px.choropleth(
         sales_state,
         locations='State Abbrev',
@@ -174,30 +159,36 @@ if 'State' in df.columns:
         hover_data={'Sales': ':.2f'},
     )
 
-    # ✅ Layout (centered, clean look)
+    # ✅ Move legend (color bar) below map, centered & compact
     fig_map.update_layout(
-        geo=dict(
-            scope="usa",
-            showlakes=False,
-            showcountries=False,
-            showland=True,
-            lakecolor="white"
-        ),
-        margin=dict(l=0, r=0, t=0, b=0),
-        coloraxis_colorbar=dict(title="Sales")
+        geo=dict(scope="usa", bgcolor="rgba(0,0,0,0)"),
+        margin=dict(l=0, r=0, t=30, b=40),
+        height=650,
+        coloraxis_colorbar=dict(
+            title="Sales ($)",
+            orientation="h",
+            thickness=12,
+            len=0.4,
+            x=0.5,
+            xanchor="center",
+            y=-0.15,
+            yanchor="top"
+        )
     )
 
-    # ✅ Add state abbreviations inside shapes
+    # ✅ Add labels inside states
     for i, row in sales_state.iterrows():
-        fig_map.add_scattergeo(
-            locations=[row['State Abbrev']],
-            locationmode="USA-states",
-            text=[row['State Abbrev']],
-            mode="text",
-            showlegend=False,
-            textfont=dict(color="black", size=10),
-            hoverinfo="skip"
-        )
+        abbrev = row['State Abbrev']
+        if abbrev in state_centers:
+            lat, lon = state_centers[abbrev]
+            fig_map.add_scattergeo(
+                lon=[lon], lat=[lat],
+                text=abbrev,
+                mode='text',
+                textfont=dict(size=12, color="black"),
+                showlegend=False,
+                hoverinfo="skip"
+            )
 
     # Render interactive map & capture clicks
     selected_points = plotly_events(fig_map, click_event=True, hover_event=False, key="state_map")
@@ -215,6 +206,7 @@ else:
 
 
 
+
 # -------------------------------
 # 14️⃣ Download Filtered Dataset
 # -------------------------------
@@ -226,6 +218,7 @@ st.download_button(
     file_name='filtered_global_superstore.csv',
     mime='text/csv'
 )
+
 
 
 
