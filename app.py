@@ -1,33 +1,26 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import os
 
 st.set_page_config(page_title="Global Superstore Dashboard", layout="wide")
 st.title("🌟 Global Superstore Interactive Dashboard")
 
 # -------------------------------
-# 1️⃣ Dataset Upload or Default
+# 1️⃣ Dataset Upload (Required)
 # -------------------------------
 uploaded_file = st.file_uploader("Upload Global Superstore Dataset (CSV or Excel)", type=['csv', 'xlsx'])
 
-# Path to default dataset in the repo
-default_path = "data/Global_Superstore2.csv"
+if uploaded_file is None:
+    st.warning("Please upload a CSV or Excel file to start the dashboard.")
+    st.stop()  # Stop the app until a file is uploaded
 
+# Load the uploaded file
 try:
-    if uploaded_file is not None:
-        # Detect CSV or Excel
-        if uploaded_file.name.endswith('.csv'):
-            df = pd.read_csv(uploaded_file, encoding='latin1')  # Fix encoding issues
-        else:
-            df = pd.read_excel(uploaded_file)
-        st.success(f"Loaded dataset: {uploaded_file.name}")
-    elif os.path.exists(default_path):
-        df = pd.read_csv(default_path, encoding='latin1')  # Default CSV
-        st.info("Using default dataset: Global_Superstore2.csv")
+    if uploaded_file.name.endswith('.csv'):
+        df = pd.read_csv(uploaded_file, encoding='latin1')  # Avoid UnicodeDecodeError
     else:
-        st.error("Default dataset not found! Please upload a CSV or Excel file.")
-        st.stop()
+        df = pd.read_excel(uploaded_file)
+    st.success(f"Loaded dataset: {uploaded_file.name}")
 except Exception as e:
     st.error(f"Error loading dataset: {e}")
     st.stop()
