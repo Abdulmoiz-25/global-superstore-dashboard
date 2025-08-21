@@ -139,17 +139,18 @@ if 'Discount' in filtered_df.columns and 'Profit' in filtered_df.columns:
     st.plotly_chart(fig_discount, use_container_width=True)
 
 # -------------------------------
-# 13️⃣ Sales by State Map (Interactive Drill-down + Dropdown)
+# 13️⃣ Sales by State Map (Interactive Drill-down)
 # -------------------------------
 st.subheader("Sales by State Map")
 
-if 'State' in df.columns:
+if 'State' in df.columns:  # use original df for reset option
     sales_state = filtered_df.groupby('State')['Sales'].sum().reset_index()
     sales_state['State Abbrev'] = sales_state['State'].apply(
         lambda x: us.states.lookup(x).abbr if us.states.lookup(x) else None
     )
     sales_state = sales_state.dropna(subset=['State Abbrev'])
 
+    # ✅ Choropleth map (only one)
     fig_map = px.choropleth(
         sales_state,
         locations='State Abbrev',
@@ -162,7 +163,10 @@ if 'State' in df.columns:
         title='Sales by State'
     )
 
-    # 50-state center dictionary
+    # ✅ Find top 5 states by sales
+    top_states = sales_state.nlargest(5, 'Sales')['State Abbrev'].tolist()
+
+    # ✅ Add dynamic state labels inside boundaries
     state_centers = {
         "AL": (-86.9023, 32.3182), "AK": (-152.4044, 64.2008), "AZ": (-111.0937, 34.0489),
         "AR": (-92.3731, 34.9697), "CA": (-119.4179, 36.7783), "CO": (-105.7821, 39.5501),
@@ -183,49 +187,39 @@ if 'State' in df.columns:
         "WI": (-89.6165, 44.2685), "WY": (-107.2903, 43.0759)
     }
 
-    # Label font size/color based on sales
     min_sales, max_sales = sales_state['Sales'].min(), sales_state['Sales'].max()
-    median_sales = sales_state['Sales'].median()
 
-    sales_state['Font Size'] = sales_state['Sales'].apply(
-        lambda x: 8 + (x - min_sales) / (max_sales - min_sales) * 10 if max_sales > min_sales else 10
-    )
-    sales_state['Font Color'] = sales_state['Sales'].apply(
-        lambda x: "white" if x >= median_sales else "black"
-    )
-
-    # Add abbreviations inside states
-    for _, row in sales_state.iterrows():
+    for i, row in sales_state.iterrows():
         abbrev = row['State Abbrev']
         if abbrev in state_centers:
             lon, lat = state_centers[abbrev]
+
+            # scale font size dynamically between 9–16
+            font_size = 9 + (row['Sales'] - min_sales) / (max_sales - min_sales) * 7
+
+            # bold if in top 5
+            font_weight = "bold" if abbrev in top_states else "normal"
+
             fig_map.add_scattergeo(
-                locationmode='USA-states',
                 lon=[lon], lat=[lat],
-                text=row['State Abbrev'],
+                text=row['State Abbrev'],  # show abbreviations
                 mode='text',
-                textfont=dict(size=row['Font Size'], color=row['Font Color']),
-                hovertext=f"{row['State']}: ${row['Sales']:,.2f}",
-                hoverinfo="text",
-                showlegend=False
+                textfont=dict(size=font_size, color="black", family=f"Arial {font_weight}"),
+                showlegend=False,
+                hoverinfo="skip"
             )
 
-    # Capture clicks on map
+    # ✅ Capture clicks
     selected_points = plotly_events(fig_map, click_event=True, hover_event=False)
+
     if selected_points:
         st.session_state.selected_state = selected_points[0]["text"]
 
-    # Alternative: Dropdown
-    state_options = sorted(df['State'].unique())
-    manual_state = st.selectbox("Or select a state from dropdown:", ["All"] + state_options)
-    if manual_state != "All":
-        st.session_state.selected_state = manual_state
-
-    # Apply selection
     if st.session_state.selected_state:
         st.success(f"🔎 Dashboard filtered for: {st.session_state.selected_state}")
         filtered_df = filtered_df[filtered_df['State'] == st.session_state.selected_state]
 
+    # ✅ Show only one map
     st.plotly_chart(fig_map, use_container_width=True)
 
 else:
@@ -242,3 +236,4 @@ st.download_button(
     file_name='filtered_global_superstore.csv',
     mime='text/csv'
 )
+
