@@ -125,7 +125,7 @@ fig_category = px.bar(profit_category, x='Category', y='Profit', title='Profit b
 st.plotly_chart(fig_category, use_container_width=True)
 
 # -------------------------------
-# 11️⃣ Discount vs Profit (Box / Violin Toggle)
+# 11️⃣ Discount vs Profit (Box / Violin Toggle + Summary Stats)
 # -------------------------------
 st.subheader("Discount vs Profit Analysis")
 
@@ -151,7 +151,7 @@ if 'Discount' in filtered_df.columns and 'Profit' in filtered_df.columns:
             y='Profit',
             color='Category',
             title="Profit Distribution Across Discount Ranges (Box Plot)",
-            points="all"  # show individual points
+            points="all"
         )
     else:
         fig_discount = px.violin(
@@ -159,8 +159,8 @@ if 'Discount' in filtered_df.columns and 'Profit' in filtered_df.columns:
             x='Discount Bin',
             y='Profit',
             color='Category',
-            box=True,      # include a mini boxplot inside violin
-            points="all", # show individual points
+            box=True,
+            points="all",
             title="Profit Distribution Across Discount Ranges (Violin Plot)"
         )
 
@@ -172,6 +172,28 @@ if 'Discount' in filtered_df.columns and 'Profit' in filtered_df.columns:
     )
 
     st.plotly_chart(fig_discount, use_container_width=True)
+
+    # -------------------------------
+    # 📊 Summary Statistics Table
+    # -------------------------------
+    st.subheader("Summary Statistics by Discount Range")
+
+    summary_stats = filtered_df.groupby("Discount Bin")["Profit"].agg(
+        Count="count",
+        Mean="mean",
+        Median="median",
+        Std_Dev="std",
+        Min="min",
+        Max="max"
+    ).reset_index()
+
+    st.dataframe(summary_stats.style.format({
+        "Mean": "{:.2f}",
+        "Median": "{:.2f}",
+        "Std_Dev": "{:.2f}",
+        "Min": "{:.2f}",
+        "Max": "{:.2f}"
+    }))
 
 
 # ==========================
@@ -294,6 +316,7 @@ st.download_button(
     file_name='filtered_global_superstore.csv',
     mime='text/csv'
 )
+
 
 
 
