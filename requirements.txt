@@ -4,4 +4,4 @@ plotly
 openpyxl
 numpy
 us
-
+streamlit-plotly-events
