@@ -63,10 +63,6 @@ sub_categories = st.sidebar.multiselect("Select Sub-Category", options=df['Sub-C
 if "selected_state" not in st.session_state:
     st.session_state.selected_state = None
 
-# Reset Filter button in sidebar
-if st.sidebar.button("🔄 Reset State Filter"):
-    st.session_state.selected_state = None
-    st.experimental_rerun()
 
 filtered_df = df[(df['Region'].isin(regions)) &
                  (df['Category'].isin(categories)) &
@@ -129,14 +125,28 @@ fig_category = px.bar(profit_category, x='Category', y='Profit', title='Profit b
 st.plotly_chart(fig_category, use_container_width=True)
 
 # -------------------------------
-# 11️⃣ Discount vs Profit Scatterplot
+# 11️⃣ Discount vs Profit Scatterplot (Improved)
 # -------------------------------
 st.subheader("Discount vs Profit")
 if 'Discount' in filtered_df.columns and 'Profit' in filtered_df.columns:
-    fig_discount = px.scatter(filtered_df, x='Discount', y='Profit', color='Category',
-                              title='Discount vs Profit', hover_data=['Product Name'])
+    fig_discount = px.scatter(
+        filtered_df, 
+        x='Discount', 
+        y='Profit', 
+        color='Category',
+        size='Sales',  # bubble size by sales for more insight
+        opacity=0.6,   # transparency for overlap handling
+        title='Discount vs Profit (with Trendline)',
+        hover_data=['Product Name']
+    )
+    # Add a trendline for better visibility of relationship
+    fig_discount.update_traces(marker=dict(line=dict(width=1, color='DarkSlateGrey')))
+    fig_discount.update_layout(
+        xaxis_title="Discount",
+        yaxis_title="Profit",
+        legend_title="Category"
+    )
     st.plotly_chart(fig_discount, use_container_width=True)
-
 # ==========================
 # Sales by State Map (Final Single Map)
 # ==========================
@@ -257,6 +267,7 @@ st.download_button(
     file_name='filtered_global_superstore.csv',
     mime='text/csv'
 )
+
 
 
 
