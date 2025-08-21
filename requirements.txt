@@ -4,4 +4,6 @@ plotly
 openpyxl
 numpy
 streamlit-plotly-events
+statsmodels
+
 
