@@ -185,6 +185,10 @@ if 'State' in filtered_df.columns:
         "MD": [39.0, -76.7]
     }
 
+    # Define font sizes (smaller for tiny states like RI, DE, VT, NH, MA, CT, NJ, MD, DC)
+    small_states = {"RI", "DE", "VT", "NH", "MA", "CT", "NJ", "MD"}
+    font_sizes = {abbr: 7 if abbr in small_states else 11 for abbr in state_abbrev.values()}
+
     # Choropleth map
     fig_map = px.choropleth(
         sales_state,
@@ -193,9 +197,7 @@ if 'State' in filtered_df.columns:
         color="Sales",
         scope="usa",
         color_continuous_scale="Blues",
-        labels={"Sales": "Sales ($)"},
-        hover_name="State",  # ✅ Show state name on hover
-        hover_data={"Sales": ":,.0f", "State Abbrev": False}  # ✅ Show sales nicely, hide abbrev
+        labels={"Sales": "Sales ($)"}
     )
 
     # Add state abbreviation labels
@@ -209,7 +211,11 @@ if 'State' in filtered_df.columns:
                 text=[abbrev],
                 mode="text",
                 showlegend=False,
-                textfont=dict(size=9, color="white", family="Arial Black")
+                textfont=dict(
+                    size=font_sizes.get(abbrev, 10),
+                    color="black",  # Black font
+                    family="Arial Black"
+                )
             )
 
     # Styling for black background
@@ -218,13 +224,13 @@ if 'State' in filtered_df.columns:
         showcountries=False,
         showcoastlines=False,
         showland=True,
-        landcolor="black",      # Dark land
-        lakecolor="black",      # Dark lakes
+        landcolor="black",
+        lakecolor="black",
         showlakes=True,
-        bgcolor="black",        # Full background
+        bgcolor="black",
         projection_type="albers usa"
     )
-    fig_map.update_traces(marker_line_width=1.2, marker_line_color="white")
+    fig_map.update_traces(marker_line_width=1.2, marker_line_color="black")  # Black state borders
     fig_map.update_layout(
         title="Sales by State (US)",
         margin={"r":0,"t":30,"l":0,"b":0},
@@ -240,7 +246,6 @@ else:
     st.warning("⚠️ No 'State' column found in dataset. Map cannot be generated.")
 
 
-
 # -------------------------------
 # 14️⃣ Download Filtered Dataset
 # -------------------------------
@@ -252,6 +257,7 @@ st.download_button(
     file_name='filtered_global_superstore.csv',
     mime='text/csv'
 )
+
 
 
 
