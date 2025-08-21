@@ -165,28 +165,7 @@ if 'State' in filtered_df.columns:
 
     sales_state['State Abbrev'] = sales_state['State'].map(state_abbrev)
 
-    # State centers for label placement
-    state_centers = {
-        "AL": (32.806671, -86.791130), "AK": (61.370716, -152.404419), "AZ": (33.729759, -111.431221),
-        "AR": (34.969704, -92.373123), "CA": (36.116203, -119.681564), "CO": (39.059811, -105.311104),
-        "CT": (41.597782, -72.755371), "DE": (39.318523, -75.507141), "FL": (27.766279, -81.686783),
-        "GA": (33.040619, -83.643074), "HI": (21.094318, -157.498337), "ID": (44.240459, -114.478828),
-        "IL": (40.349457, -88.986137), "IN": (39.849426, -86.258278), "IA": (42.011539, -93.210526),
-        "KS": (38.526600, -96.726486), "KY": (37.668140, -84.670067), "LA": (31.169546, -91.867805),
-        "ME": (44.693947, -69.381927), "MD": (39.063946, -76.802101), "MA": (42.230171, -71.530106),
-        "MI": (43.326618, -84.536095), "MN": (45.694454, -93.900192), "MS": (32.741646, -89.678696),
-        "MO": (38.456085, -92.288368), "MT": (46.921925, -110.454353), "NE": (41.125370, -98.268082),
-        "NV": (38.313515, -117.055374), "NH": (43.452492, -71.563896), "NJ": (40.298904, -74.521011),
-        "NM": (34.840515, -106.248482), "NY": (42.165726, -74.948051), "NC": (35.630066, -79.806419),
-        "ND": (47.528912, -99.784012), "OH": (40.388783, -82.764915), "OK": (35.565342, -96.928917),
-        "OR": (44.572021, -122.070938), "PA": (40.590752, -77.209755), "RI": (41.680893, -71.511780),
-        "SC": (33.856892, -80.945007), "SD": (44.299782, -99.438828), "TN": (35.747845, -86.692345),
-        "TX": (31.054487, -97.563461), "UT": (40.150032, -111.862434), "VT": (44.045876, -72.710686),
-        "VA": (37.769337, -78.169968), "WA": (47.400902, -121.490494), "WV": (38.491226, -80.954456),
-        "WI": (44.268543, -89.616508), "WY": (42.755966, -107.302490)
-    }
-
-    # Create choropleth map
+    # Choropleth map with hover info
     fig_map = px.choropleth(
         sales_state,
         locations="State Abbrev",
@@ -194,53 +173,42 @@ if 'State' in filtered_df.columns:
         color="Sales",
         scope="usa",
         color_continuous_scale="Blues",
-        labels={"Sales": "Sales ($)"}
+        labels={"Sales": "Sales ($)"},
+        hover_name="State",     # Show state name on hover
+        hover_data={"Sales": ":,.2f"}  # Show formatted sales
     )
-
-    # Add state labels
-    for _, row in sales_state.iterrows():
-        abbrev = row['State Abbrev']
-        if abbrev in state_centers:
-            lat, lon = state_centers[abbrev]
-
-            # White outline
-            fig_map.add_scattergeo(
-                locationmode="USA-states",
-                lon=[lon], lat=[lat], text=abbrev,
-                mode="text", showlegend=False,
-                textfont=dict(size=10, color="white", family="Arial Black"),
-                opacity=0.7
-            )
-
-            # Black top text
-            fig_map.add_scattergeo(
-                locationmode="USA-states",
-                lon=[lon], lat=[lat], text=abbrev,
-                mode="text", showlegend=False,
-                textfont=dict(size=8, color="black", family="Arial Black")
-            )
 
     # Styling
     fig_map.update_geos(
         fitbounds="locations",
         showcountries=False,
         showcoastlines=False,
-        showland=True, landcolor="white",
-        lakecolor="lightblue", showlakes=True,
+        showland=True,
+        landcolor="black",     # Dark land
+        lakecolor="black",     # Dark lakes
+        showlakes=True,
         projection_type="albers usa"
     )
-    fig_map.update_traces(marker_line_width=1.2, marker_line_color="black")
+
+    fig_map.update_traces(
+        marker_line_width=1.2,
+        marker_line_color="white",  # White borders for contrast
+        hovertemplate="<b>%{hovertext}</b><br>Sales: $%{z:,.2f}<extra></extra>"
+    )
+
     fig_map.update_layout(
         title="Sales by State (US)",
         margin={"r":0,"t":30,"l":0,"b":0},
         height=500,
-        paper_bgcolor="white",
-        plot_bgcolor="white"
+        paper_bgcolor="black",   # Whole figure background
+        plot_bgcolor="black",
+        font=dict(color="white")  # White text for readability
     )
 
     st.plotly_chart(fig_map, use_container_width=True)
 else:
     st.warning("⚠️ No 'State' column found in dataset. Map cannot be generated.")
+
 
 # -------------------------------
 # 14️⃣ Download Filtered Dataset
@@ -253,6 +221,7 @@ st.download_button(
     file_name='filtered_global_superstore.csv',
     mime='text/csv'
 )
+
 
 
 
