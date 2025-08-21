@@ -171,6 +171,7 @@ if 'State' in df.columns:  # use original df for reset option
         title='Sales by State'
     )
 
+    # Predefined state center coordinates (safe lookup, no centroid issues)
    # Predefined lat/lon for all 50 U.S. states (approx centers)
 state_centers = {
     "AL": (-86.9023, 32.3182),
@@ -226,18 +227,29 @@ state_centers = {
 }
 
 
-    # Add text labels
+    # Dynamic font size & color
+    min_sales, max_sales = sales_state['Sales'].min(), sales_state['Sales'].max()
+    median_sales = sales_state['Sales'].median()
+
+    sales_state['Font Size'] = sales_state['Sales'].apply(
+        lambda x: 8 + (x - min_sales) / (max_sales - min_sales) * 10 if max_sales > min_sales else 10
+    )
+    sales_state['Font Color'] = sales_state['Sales'].apply(
+        lambda x: "white" if x >= median_sales else "black"
+    )
+
+    # Add state name labels safely
     for i, row in sales_state.iterrows():
         abbrev = row['State Abbrev']
-        if abbrev in state_centers:
+        if abbrev in state_centers:  # ✅ only plot known centers
             lon, lat = state_centers[abbrev]
             fig_map.add_scattergeo(
                 locationmode='USA-states',
-                lon=[lon],
-                lat=[lat],
+                lon=[lon], lat=[lat],
                 text=row['State'],
-                mode='text',
-                textfont=dict(size=10, color="black"),
+                mode='text+markers',
+                marker=dict(size=8, opacity=0),
+                textfont=dict(size=row['Font Size'], color=row['Font Color']),
                 hovertext=f"{row['State']}: ${row['Sales']:,.2f}",
                 hoverinfo="text",
                 showlegend=False
@@ -258,6 +270,7 @@ state_centers = {
 else:
     st.info("State data not available for map visualization.")
 
+
 # -------------------------------
 # 14️⃣ Download Filtered Dataset
 # -------------------------------
@@ -269,3 +282,4 @@ st.download_button(
     file_name='filtered_global_superstore.csv',
     mime='text/csv'
 )
+
