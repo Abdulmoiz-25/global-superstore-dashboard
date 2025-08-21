@@ -88,16 +88,51 @@ col4.metric("📊 Profit Margin", f"{profit_margin:.2f}%")
 # -------------------------------
 st.subheader("Top 5 Customers by Sales")
 top_customers = filtered_df.groupby('Customer Name')['Sales'].sum().sort_values(ascending=False).head(5).reset_index()
-fig_customers = px.bar(top_customers, x='Customer Name', y='Sales', title='Top 5 Customers by Sales', text='Sales')
+fig_customers = px.bar(
+    top_customers, 
+    x='Customer Name', 
+    y='Sales', 
+    text='Sales',
+    color='Sales',
+    color_continuous_scale="Tealgrn",
+    title='Top 5 Customers by Sales'
+)
+fig_customers.update_traces(texttemplate='$%{text:,.0f}', textposition="outside")
+fig_customers.update_layout(
+    xaxis_title="Customer",
+    yaxis_title="Sales ($)",
+    uniformtext_minsize=10,
+    uniformtext_mode='hide',
+    showlegend=False,
+    height=400
+)
 st.plotly_chart(fig_customers, use_container_width=True)
+
 
 # -------------------------------
 # 7️⃣ Top 5 Products by Sales
 # -------------------------------
 st.subheader("Top 5 Products by Sales")
 top_products = filtered_df.groupby('Product Name')['Sales'].sum().sort_values(ascending=False).head(5).reset_index()
-fig_products = px.bar(top_products, x='Product Name', y='Sales', title='Top 5 Products by Sales', text='Sales')
+fig_products = px.bar(
+    top_products, 
+    x='Product Name', 
+    y='Sales', 
+    text='Sales',
+    color='Sales',
+    color_continuous_scale="Purples",
+    title='Top 5 Products by Sales'
+)
+fig_products.update_traces(texttemplate='$%{text:,.0f}', textposition="outside")
+fig_products.update_layout(
+    xaxis_title="Product",
+    yaxis_title="Sales ($)",
+    xaxis_tickangle=-30,
+    showlegend=False,
+    height=400
+)
 st.plotly_chart(fig_products, use_container_width=True)
+
 
 # -------------------------------
 # 8️⃣ Sales Trend Over Time
@@ -105,24 +140,70 @@ st.plotly_chart(fig_products, use_container_width=True)
 st.subheader("Sales Trend Over Time")
 if 'Order Date' in filtered_df.columns:
     sales_time = filtered_df.groupby(pd.Grouper(key='Order Date', freq='M'))['Sales'].sum().reset_index()
-    fig_sales_time = px.line(sales_time, x='Order Date', y='Sales', title='Monthly Sales Trend', markers=True)
+    fig_sales_time = px.line(
+        sales_time, 
+        x='Order Date', 
+        y='Sales', 
+        title='📈 Monthly Sales Trend',
+        markers=True
+    )
+    fig_sales_time.update_traces(line=dict(width=3, color="royalblue"), marker=dict(size=8))
+    fig_sales_time.update_layout(
+        xaxis_title="Date",
+        yaxis_title="Sales ($)",
+        hovermode="x unified",
+        height=450
+    )
     st.plotly_chart(fig_sales_time, use_container_width=True)
+
 
 # -------------------------------
 # 9️⃣ Sales by Region
 # -------------------------------
 st.subheader("Sales by Region")
 sales_region = filtered_df.groupby('Region')['Sales'].sum().reset_index()
-fig_region = px.bar(sales_region, x='Region', y='Sales', title='Sales by Region', color='Region', text='Sales')
+fig_region = px.bar(
+    sales_region, 
+    x='Region', 
+    y='Sales', 
+    color='Region', 
+    text='Sales',
+    color_discrete_sequence=px.colors.qualitative.Bold,
+    title="Sales by Region"
+)
+fig_region.update_traces(texttemplate='$%{text:,.0f}', textposition="outside")
+fig_region.update_layout(
+    xaxis_title="Region",
+    yaxis_title="Sales ($)",
+    showlegend=False,
+    height=400
+)
 st.plotly_chart(fig_region, use_container_width=True)
+
 
 # -------------------------------
 # 🔟 Profit by Category
 # -------------------------------
 st.subheader("Profit by Category")
 profit_category = filtered_df.groupby('Category')['Profit'].sum().reset_index()
-fig_category = px.bar(profit_category, x='Category', y='Profit', title='Profit by Category', color='Category', text='Profit')
+fig_category = px.bar(
+    profit_category, 
+    x='Category', 
+    y='Profit', 
+    color='Category', 
+    text='Profit',
+    color_discrete_sequence=px.colors.qualitative.Set2,
+    title="Profit by Category"
+)
+fig_category.update_traces(texttemplate='$%{text:,.0f}', textposition="outside")
+fig_category.update_layout(
+    xaxis_title="Category",
+    yaxis_title="Profit ($)",
+    showlegend=False,
+    height=400
+)
 st.plotly_chart(fig_category, use_container_width=True)
+
 
 # -------------------------------
 # 11️⃣ Discount vs Profit (Box / Violin Toggle + Summary Stats)
@@ -316,6 +397,7 @@ st.download_button(
     file_name='filtered_global_superstore.csv',
     mime='text/csv'
 )
+
 
 
 
