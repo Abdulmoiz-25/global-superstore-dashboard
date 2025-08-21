@@ -283,7 +283,8 @@ if 'Discount' in filtered_df.columns and 'Profit' in filtered_df.columns:
             y='Profit',
             color='Category',
             title="Profit Distribution Across Discount Ranges (Box Plot)",
-            points="all"
+            points="all",
+            color_discrete_sequence=px.colors.qualitative.Set2  # matching colors
         )
     else:
         fig_discount = px.violin(
@@ -293,14 +294,17 @@ if 'Discount' in filtered_df.columns and 'Profit' in filtered_df.columns:
             color='Category',
             box=True,
             points="all",
-            title="Profit Distribution Across Discount Ranges (Violin Plot)"
+            title="Profit Distribution Across Discount Ranges (Violin Plot)",
+            color_discrete_sequence=px.colors.qualitative.Set2  # matching colors
         )
 
+    # Consistent layout polish
     fig_discount.update_layout(
         xaxis_title="Discount Range",
-        yaxis_title="Profit",
+        yaxis_title="Profit ($)",
         legend_title="Category",
-        height=600
+        height=500,
+        margin=dict(t=60, b=70, l=60, r=30)
     )
 
     st.plotly_chart(fig_discount, use_container_width=True)
@@ -448,6 +452,7 @@ st.download_button(
     file_name='filtered_global_superstore.csv',
     mime='text/csv'
 )
+
 
 
 
