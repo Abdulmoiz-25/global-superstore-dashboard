@@ -138,28 +138,28 @@ if 'Sub-Category' in filtered_df.columns:
     st.plotly_chart(fig_subcat, use_container_width=True)
 
 # -------------------------------
-# 13️⃣ Sales by City Map
+# 13️⃣ Sales by State Map
 # -------------------------------
-st.subheader("Sales by City Map")
-if 'City' in filtered_df.columns and 'State' in filtered_df.columns:
-    sales_map = filtered_df.groupby(['City', 'State'])['Sales'].sum().reset_index()
-    sales_map['Location'] = sales_map['City'] + ', ' + sales_map['State']
+st.subheader("Sales by State Map")
+if 'State' in filtered_df.columns:
+    # Aggregate sales by State
+    sales_state = filtered_df.groupby('State')['Sales'].sum().reset_index()
 
-    fig_map = px.scatter_geo(
-        sales_map,
-        locations='Location',
-        locationmode='USA-states',  # Use 'world' for global dataset
+    fig_map = px.choropleth(
+        sales_state,
+        locations='State',
+        locationmode='USA-states',  # Works for US states
+        color='Sales',
+        color_continuous_scale='Blues',
         scope='usa',
-        size='Sales',
-        hover_name='City',
-        hover_data={'State': True, 'Sales': ':.2f'},
-        title='Sales Distribution by City',
-        projection='albers usa'
+        hover_name='State',
+        hover_data={'Sales': ':.2f'},
+        title='Sales by State'
     )
 
     st.plotly_chart(fig_map, use_container_width=True)
 else:
-    st.info("City/State data not available for map visualization.")
+    st.info("State data not available for map visualization.")
 
 # -------------------------------
 # 14️⃣ Download Filtered Dataset
