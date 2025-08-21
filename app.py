@@ -125,9 +125,9 @@ fig_category = px.bar(profit_category, x='Category', y='Profit', title='Profit b
 st.plotly_chart(fig_category, use_container_width=True)
 
 # -------------------------------
-# 11️⃣ Discount vs Profit (Box Plot by Discount Ranges)
+# 11️⃣ Discount vs Profit (Box / Violin Toggle)
 # -------------------------------
-st.subheader("Discount vs Profit Distribution")
+st.subheader("Discount vs Profit Analysis")
 
 if 'Discount' in filtered_df.columns and 'Profit' in filtered_df.columns:
     # Create discount bins (0–10%, 10–20%, etc.)
@@ -137,14 +137,32 @@ if 'Discount' in filtered_df.columns and 'Profit' in filtered_df.columns:
         labels=['0-10%', '10-20%', '20-30%', '30-40%', '40%+']
     )
 
-    fig_discount = px.box(
-        filtered_df,
-        x='Discount Bin',
-        y='Profit',
-        color='Category',
-        title="Profit Distribution Across Discount Ranges",
-        points="all"  # show individual points as jitter
+    # User choice: Boxplot or Violin
+    plot_type = st.radio(
+        "Choose plot type:",
+        ["📦 Box Plot", "🎻 Violin Plot"],
+        horizontal=True
     )
+
+    if plot_type == "📦 Box Plot":
+        fig_discount = px.box(
+            filtered_df,
+            x='Discount Bin',
+            y='Profit',
+            color='Category',
+            title="Profit Distribution Across Discount Ranges (Box Plot)",
+            points="all"  # show individual points
+        )
+    else:
+        fig_discount = px.violin(
+            filtered_df,
+            x='Discount Bin',
+            y='Profit',
+            color='Category',
+            box=True,      # include a mini boxplot inside violin
+            points="all", # show individual points
+            title="Profit Distribution Across Discount Ranges (Violin Plot)"
+        )
 
     fig_discount.update_layout(
         xaxis_title="Discount Range",
@@ -154,6 +172,7 @@ if 'Discount' in filtered_df.columns and 'Profit' in filtered_df.columns:
     )
 
     st.plotly_chart(fig_discount, use_container_width=True)
+
 
 # ==========================
 # Sales by State Map (Final Single Map)
@@ -275,6 +294,7 @@ st.download_button(
     file_name='filtered_global_superstore.csv',
     mime='text/csv'
 )
+
 
 
 
